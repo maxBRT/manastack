@@ -1,2 +1,3 @@
-# tango
-BaaS project that aims to easily provide persistant cloud storage to Game Developper
+# Tango
+
+Is a BaaS that provide persistant cloud storage to Indie Game Developper.
