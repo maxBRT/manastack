@@ -1,38 +1,17 @@
 <?php
 
+use App\Http\Controllers\GameController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Games
-Route::get("/games", function (Request $request) {
-    return json_encode([
-        "Games" => "Ok",
-    ]);
-});
+Route::get("/games", [GameController::class, 'index']);
+Route::get("/games/{game}", [GameController::class,'show']);
+Route::post("/games" , [GameController::class,'store']);
+Route::put("/games/{game}", [GameController::class, 'update']);
+Route::delete("/games/{game}" , [GameController::class, 'destroy']);      
 
-Route::get("/games/{game}", function (Request $request) {
-    return json_encode([
-        "Game" => "got one game",
-    ]);
-});
 
-Route::post("/games" , function (Request $request) { 
-    return json_encode([
-        "Games" => "Game creates"
-    ]);
-});
-
- Route::patch("/games" , function (Request $request) {
-    return json_encode([
-        "Games"=> "Game Updated"
-    ]);
- });
-
- Route::delete("/games/{games}" , function (Request $request) {
-    return json_encode([
-        "Games"=> "Game deleted"
-    ]);
- });      
 
  // Players
 Route::post("/players", function (Request $request) {
