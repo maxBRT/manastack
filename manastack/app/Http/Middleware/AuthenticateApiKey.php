@@ -27,7 +27,8 @@ class AuthenticateApiKey
 
         $request->merge(['game' => $game]);
         $request->attributes->set('game', $game);
-
+        
+        $this->apiKeyService->updateLastUsedAt($apiKey);
         return $next($request);
     }
 }

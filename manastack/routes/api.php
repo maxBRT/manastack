@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 // Route::delete('/games/{game}', [GameApiController::class, 'destroy']);
 
 // Player & Save routes (authenticated via API key)
-Route::middleware('auth.apikey')->group(function () {
+Route::middleware('auth.apikey', 'ratelimit')->group(function () {
     Route::post('/players', [PlayerApiController::class, 'store']);
     Route::get('/players/{player}', [PlayerApiController::class, 'show']);
     Route::get('/players/{player}/saves', [SaveApiController::class, 'index']);

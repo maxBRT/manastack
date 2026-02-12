@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'auth.apikey' => \App\Http\Middleware\AuthenticateApiKey::class,
+            'ratelimit' => \App\Http\Middleware\RateLimitApi::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

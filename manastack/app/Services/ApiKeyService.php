@@ -48,4 +48,13 @@ class ApiKeyService
 
         return $apiKey->game;
     }
+
+    public function updateLastUsedAt(string $plainText): void
+    {
+        $hashedKey = hash('sha256', $plainText);
+        $apiKey = ApiKey::query()
+            ->where('key', $hashedKey)
+            ->first();
+        $apiKey->update(['last_used_at' => now()]);
+    }
 }
