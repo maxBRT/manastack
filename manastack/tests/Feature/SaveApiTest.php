@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ApiKey;
+use App\Models\Client;
 use App\Models\Game;
 use App\Models\Player;
 use App\Models\Save;
@@ -17,6 +18,8 @@ class SaveApiTest extends TestCase
     private Game $game;
 
     private Player $player;
+
+    private Client $client;
 
     private string $plainTextKey;
 
@@ -35,6 +38,11 @@ class SaveApiTest extends TestCase
         $this->player = Player::factory()->create([
             'game_id' => $this->game->id,
         ]);
+
+        $this->client = Client::factory()->create([
+            'player_id' => $this->player->id,
+            'client_id' => 'device-abc-123',
+        ]);
     }
 
     private function apiHeaders(): array
@@ -47,7 +55,7 @@ class SaveApiTest extends TestCase
         Save::factory()->count(3)->create(['player_id' => $this->player->id]);
 
         $response = $this->getJson(
-            "/api/players/{$this->player->id}/saves",
+            "/api/saves/{$this->client->client_id}",
             $this->apiHeaders()
         );
 
@@ -57,7 +65,7 @@ class SaveApiTest extends TestCase
     public function test_index_returns_empty_list_when_no_saves(): void
     {
         $response = $this->getJson(
-            "/api/players/{$this->player->id}/saves",
+            "/api/saves/{$this->client->client_id}",
             $this->apiHeaders()
         );
 
@@ -67,7 +75,7 @@ class SaveApiTest extends TestCase
     public function test_store_creates_a_save(): void
     {
         $response = $this->postJson(
-            "/api/players/{$this->player->id}/saves",
+            "/api/saves/{$this->client->client_id}",
             ['name' => 'slot1', 'data' => ['level' => 5, 'hp' => 100]],
             $this->apiHeaders()
         );
@@ -86,7 +94,7 @@ class SaveApiTest extends TestCase
     public function test_store_requires_name_and_data(): void
     {
         $response = $this->postJson(
-            "/api/players/{$this->player->id}/saves",
+            "/api/saves/{$this->client->client_id}",
             [],
             $this->apiHeaders()
         );
@@ -104,7 +112,7 @@ class SaveApiTest extends TestCase
         ]);
 
         $response = $this->getJson(
-            "/api/players/{$this->player->id}/saves/{$save->id}",
+            "/api/saves/{$this->client->client_id}/{$save->id}",
             $this->apiHeaders()
         );
 
@@ -120,7 +128,7 @@ class SaveApiTest extends TestCase
         $save = Save::factory()->create(['player_id' => $otherPlayer->id]);
 
         $response = $this->getJson(
-            "/api/players/{$this->player->id}/saves/{$save->id}",
+            "/api/saves/{$this->client->client_id}/{$save->id}",
             $this->apiHeaders()
         );
 
@@ -136,7 +144,7 @@ class SaveApiTest extends TestCase
         ]);
 
         $response = $this->putJson(
-            "/api/players/{$this->player->id}/saves/{$save->id}",
+            "/api/saves/{$this->client->client_id}/{$save->id}",
             ['data' => ['level' => 50, 'hp' => 200]],
             $this->apiHeaders()
         );
@@ -154,7 +162,7 @@ class SaveApiTest extends TestCase
         ]);
 
         $response = $this->deleteJson(
-            "/api/players/{$this->player->id}/saves/{$save->id}",
+            "/api/saves/{$this->client->client_id}/{$save->id}",
             [],
             $this->apiHeaders()
         );
@@ -166,7 +174,7 @@ class SaveApiTest extends TestCase
     public function test_destroy_returns_404_for_nonexistent_save(): void
     {
         $response = $this->deleteJson(
-            "/api/players/{$this->player->id}/saves/nonexistent-id",
+            "/api/saves/{$this->client->client_id}/nonexistent-id",
             [],
             $this->apiHeaders()
         );
@@ -174,16 +182,50 @@ class SaveApiTest extends TestCase
         $response->assertStatus(404);
     }
 
-    public function test_cannot_access_saves_for_player_from_different_game(): void
+    public function test_cannot_access_saves_for_client_from_different_game(): void
     {
         $otherGame = Game::factory()->create();
         $otherPlayer = Player::factory()->create(['game_id' => $otherGame->id]);
+        $otherClient = Client::factory()->create(['player_id' => $otherPlayer->id]);
 
         $response = $this->getJson(
-            "/api/players/{$otherPlayer->id}/saves",
+            "/api/saves/{$otherClient->client_id}",
             $this->apiHeaders()
         );
 
         $response->assertStatus(404);
+    }
+
+    public function test_returns_404_for_unknown_client_id(): void
+    {
+        $response = $this->getJson(
+            '/api/saves/unknown-device-id',
+            $this->apiHeaders()
+        );
+
+        $response->assertStatus(404);
+    }
+
+    public function test_multiple_clients_share_saves_through_player(): void
+    {
+        $secondClient = Client::factory()->create([
+            'player_id' => $this->player->id,
+            'client_id' => 'device-xyz-456',
+        ]);
+
+        Save::factory()->count(2)->create(['player_id' => $this->player->id]);
+
+        $responseA = $this->getJson(
+            "/api/saves/{$this->client->client_id}",
+            $this->apiHeaders()
+        );
+
+        $responseB = $this->getJson(
+            "/api/saves/{$secondClient->client_id}",
+            $this->apiHeaders()
+        );
+
+        $responseA->assertStatus(200)->assertJsonCount(2, 'data');
+        $responseB->assertStatus(200)->assertJsonCount(2, 'data');
     }
 }

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ApiKey;
+use App\Models\Client;
 use App\Models\Game;
 use App\Models\Player;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,15 +37,10 @@ class PlayerApiTest extends TestCase
             'client_id' => 'device-abc-123',
         ], ['X-API-Key' => $this->plainTextKey]);
 
-        $response->assertStatus(201)->assertJson([
-            'data' => [
-                'client_id' => 'device-abc-123',
-                'game_id' => $this->game->id,
-            ],
-        ]);
+        $response->assertStatus(201)->assertJsonPath('data.game_id', $this->game->id);
+        $response->assertJsonPath('data.client_ids.0', 'device-abc-123');
 
-        $this->assertDatabaseHas('players', [
-            'game_id' => $this->game->id,
+        $this->assertDatabaseHas('clients', [
             'client_id' => 'device-abc-123',
         ]);
     }
@@ -53,6 +49,9 @@ class PlayerApiTest extends TestCase
     {
         $player = Player::factory()->create([
             'game_id' => $this->game->id,
+        ]);
+        Client::factory()->create([
+            'player_id' => $player->id,
             'client_id' => 'device-abc-123',
         ]);
 
@@ -60,12 +59,8 @@ class PlayerApiTest extends TestCase
             'client_id' => 'device-abc-123',
         ], ['X-API-Key' => $this->plainTextKey]);
 
-        $response->assertStatus(200)->assertJson([
-            'data' => [
-                'id' => $player->id,
-                'client_id' => 'device-abc-123',
-            ],
-        ]);
+        $response->assertStatus(200)->assertJsonPath('data.id', $player->id);
+        $response->assertJsonPath('data.client_ids.0', 'device-abc-123');
 
         $this->assertDatabaseCount('players', 1);
     }
@@ -83,6 +78,9 @@ class PlayerApiTest extends TestCase
     {
         $player = Player::factory()->create([
             'game_id' => $this->game->id,
+        ]);
+        Client::factory()->create([
+            'player_id' => $player->id,
             'client_id' => 'device-abc-123',
         ]);
 
@@ -90,12 +88,8 @@ class PlayerApiTest extends TestCase
             'X-API-Key' => $this->plainTextKey,
         ]);
 
-        $response->assertStatus(200)->assertJson([
-            'data' => [
-                'id' => $player->id,
-                'client_id' => 'device-abc-123',
-            ],
-        ]);
+        $response->assertStatus(200)->assertJsonPath('data.id', $player->id);
+        $response->assertJsonPath('data.client_ids.0', 'device-abc-123');
     }
 
     public function test_show_returns_404_for_player_from_different_game(): void

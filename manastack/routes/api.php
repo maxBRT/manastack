@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth.apikey', 'ratelimit')->group(function () {
     Route::post('/players', [PlayerApiController::class, 'store']);
     Route::get('/players/{player}', [PlayerApiController::class, 'show']);
-    Route::get('/players/{player}/saves', [SaveApiController::class, 'index']);
-    Route::post('/players/{player}/saves', [SaveApiController::class, 'store']);
-    Route::get('/players/{player}/saves/{save}', [SaveApiController::class, 'show']);
-    Route::put('/players/{player}/saves/{save}', [SaveApiController::class, 'update']);
-    Route::delete('/players/{player}/saves/{save}', [SaveApiController::class, 'destroy']);
+    Route::get('/saves/{client_id}', [SaveApiController::class, 'index']);
+    Route::post('/saves/{client_id}', [SaveApiController::class, 'store']);
+    Route::get('/saves/{client_id}/{save}', [SaveApiController::class, 'show']);
+    Route::put('/saves/{client_id}/{save}', [SaveApiController::class, 'update']);
+    Route::delete('/saves/{client_id}/{save}', [SaveApiController::class, 'destroy']);
 });

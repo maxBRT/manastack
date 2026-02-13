@@ -14,12 +14,16 @@ class Player extends Model
 
     protected $fillable = [
         'game_id',
-        'client_id',
     ];
 
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);
+    }
+
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
     }
 
     public function saves(): HasMany

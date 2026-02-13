@@ -15,44 +15,48 @@ class SaveApiController extends Controller
 {
     public function __construct(public SaveService $saveService) {}
 
-    public function index(Request $request, Player $player): AnonymousResourceCollection
+    private function resolvePlayer(Request $request, string $clientId): Player
     {
         $game = $request->attributes->get('game');
-        abort_unless($player->game_id === $game->id, 404);
+
+        return Player::whereHas('clients', fn ($q) => $q->where('client_id', $clientId))
+            ->where('game_id', $game->id)
+            ->firstOrFail();
+    }
+
+    public function index(Request $request, string $clientId): AnonymousResourceCollection
+    {
+        $player = $this->resolvePlayer($request, $clientId);
 
         return SaveResource::collection($this->saveService->listForPlayer($player));
     }
 
-    public function store(StoreSaveRequest $request, Player $player): SaveResource
+    public function store(StoreSaveRequest $request, string $clientId): SaveResource
     {
-        $game = $request->attributes->get('game');
-        abort_unless($player->game_id === $game->id, 404);
+        $player = $this->resolvePlayer($request, $clientId);
 
         $save = $this->saveService->create($player, $request->validated());
 
         return new SaveResource($save);
     }
 
-    public function show(Request $request, Player $player, string $saveId): SaveResource
+    public function show(Request $request, string $clientId, string $saveId): SaveResource
     {
-        $game = $request->attributes->get('game');
-        abort_unless($player->game_id === $game->id, 404);
+        $player = $this->resolvePlayer($request, $clientId);
 
         return new SaveResource($this->saveService->find($player, $saveId));
     }
 
-    public function update(UpdateSaveRequest $request, Player $player, string $saveId): SaveResource
+    public function update(UpdateSaveRequest $request, string $clientId, string $saveId): SaveResource
     {
-        $game = $request->attributes->get('game');
-        abort_unless($player->game_id === $game->id, 404);
+        $player = $this->resolvePlayer($request, $clientId);
 
         return new SaveResource($this->saveService->update($player, $saveId, $request->validated()));
     }
 
-    public function destroy(Request $request, Player $player, string $saveId): JsonResponse
+    public function destroy(Request $request, string $clientId, string $saveId): JsonResponse
     {
-        $game = $request->attributes->get('game');
-        abort_unless($player->game_id === $game->id, 404);
+        $player = $this->resolvePlayer($request, $clientId);
 
         $this->saveService->delete($player, $saveId);
 

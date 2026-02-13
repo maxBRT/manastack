@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PlayerResource;
-use App\Models\Player;
 use App\Services\PlayerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +20,7 @@ class PlayerApiController extends Controller
         $game = $request->attributes->get('game');
         ['player' => $player, 'created' => $created] = $this->playerService->findOrCreate($game, $request->input('client_id'));
 
+        $player->load('clients');
         $resource = new PlayerResource($player);
 
         return $created
@@ -28,11 +28,13 @@ class PlayerApiController extends Controller
             : $resource->response()->setStatusCode(200);
     }
 
-    public function show(Request $request, Player $player): PlayerResource
+    public function show(Request $request, string $playerId): PlayerResource
     {
         $game = $request->attributes->get('game');
 
-        abort_unless($player->game_id === $game->id, 404);
+        $player = $this->playerService->find($game, $playerId);
+
+        $player->load('clients');
 
         return new PlayerResource($player);
     }

@@ -8,15 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('players', function (Blueprint $table) {
+        Schema::create('clients', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('game_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('player_id')->constrained()->cascadeOnDelete();
+            $table->string('client_id');
             $table->timestamps();
+
+            $table->unique(['player_id', 'client_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('players');
+        Schema::dropIfExists('clients');
     }
 };
